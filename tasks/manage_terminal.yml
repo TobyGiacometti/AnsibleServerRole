@@ -1,0 +1,5 @@
+- name: Install packages for terminal
+  apt:
+    name: ncurses-term
+    update_cache: true
+  become: true

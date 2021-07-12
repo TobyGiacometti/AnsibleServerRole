@@ -1,0 +1,11 @@
+- name: Install packages for editor
+  apt:
+    name: vim
+    update_cache: true
+  become: true
+
+- name: Set default editor
+  command: update-alternatives --set editor /usr/bin/vim.basic
+  become: true
+  register: server_editor_default_result
+  changed_when: server_editor_default_result.stdout|length > 0

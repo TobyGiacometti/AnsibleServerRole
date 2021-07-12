@@ -1,0 +1,19 @@
+- name: Install packages for system clock management
+  apt:
+    name: ntp
+    update_cache: true
+  become: true
+
+- name: Manage time zone for system clock
+  block:
+    - name: Retrieve system clock information
+      command: timedatectl status
+      become: true
+      register: server_timedatectl_status_result
+      changed_when: false
+
+    - name: Set system clock time zone
+      command: timedatectl set-timezone {{ server_time_zone|quote }}
+      become: true
+      when: "server_timedatectl_status_result.stdout is not search('Time zone: ' + server_time_zone|regex_escape)"
+  when: server_time_zone is defined

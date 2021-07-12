@@ -1,0 +1,16 @@
+- name: Manage system locales
+  block:
+    - name: Install packages for system locale management
+      apt:
+        name: locales
+        update_cache: true
+      become: true
+
+    - name: Define system locales that should be generated
+      template:
+        src: locale.gen.j2
+        dest: /etc/locale.gen
+        mode: 0644
+      become: true
+      notify: server_locales_handler
+  when: server_locales is defined

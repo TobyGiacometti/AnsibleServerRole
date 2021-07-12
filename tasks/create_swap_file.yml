@@ -1,0 +1,23 @@
+- name: Create {{ server_swap_file_path }}  # noqa 301
+  command: >
+    dd
+    if=/dev/zero
+    of={{ server_swap_file_path|quote }}
+    bs=1M
+    count={{ server_swap_file_mb|quote }}
+  become: true
+
+- name: Set permissions for {{ server_swap_file_path }}
+  file:
+    path: "{{ server_swap_file_path }}"
+    mode: 0600
+  become: true
+
+- name: Create Linux swap area in {{ server_swap_file_path }}  # noqa 301
+  command: mkswap {{ server_swap_file_path|quote }}
+  become: true
+
+- name: Enable swapping on {{ server_swap_file_path }}
+  command: swapon {{ server_swap_file_path|quote }}
+  become: true
+  when: molecule_yml is not defined

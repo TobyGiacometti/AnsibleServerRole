@@ -1,0 +1,9 @@
+- name: Prepare all hosts
+  hosts: all
+  vars_files:
+    - ../../vars/main.yml
+  tasks:
+    - name: Include swap file management tasks
+      include_tasks: ../../tasks/manage_swap_file.yml
+      vars:
+        server_swap_file_mb: 256

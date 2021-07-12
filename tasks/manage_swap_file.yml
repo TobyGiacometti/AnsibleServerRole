@@ -1,0 +1,66 @@
+- name: Retrieve swap file information
+  stat:
+    get_checksum: false
+    path: "{{ server_swap_file_path }}"
+  become: true
+  register: server_swap_file_stat_result
+
+- name: Set up swap file
+  block:
+    - name: Add swap file to fstab
+      mount:
+        src: "{{ server_swap_file_path }}"
+        path: none
+        fstype: swap
+        opts: sw
+        state: present
+      become: true
+
+    - name: Include swap file creation tasks
+      include_tasks: create_swap_file.yml
+  when:
+    - not server_swap_file_stat_result.stat.exists
+    - server_swap_file_mb is defined
+
+- name: Resize swap file
+  block:
+    - name: Define temporary swap file path
+      set_fact:
+        server_tmp_swap_file_path: "{{ server_swap_file_path }}.tmp"
+
+    # Additional temporary swap space is required so that swapping on the swap
+    # file can be disabled when not enough RAM is available.
+    - name: Include swap file creation tasks
+      include_tasks: create_swap_file.yml
+      vars:
+        server_swap_file_path: "{{ server_tmp_swap_file_path }}"
+
+    - name: Include swap file removal tasks
+      include_tasks: remove_swap_file.yml
+
+    - name: Include swap file creation tasks
+      include_tasks: create_swap_file.yml
+
+    - name: Include swap file removal tasks
+      include_tasks: remove_swap_file.yml
+      vars:
+        server_swap_file_path: "{{ server_tmp_swap_file_path }}"
+  when:
+    - server_swap_file_stat_result.stat.exists
+    - server_swap_file_mb is defined
+    - (server_swap_file_mb|int * 1024 * 1024) != server_swap_file_stat_result.stat.size
+
+- name: Disable swap file
+  block:
+    - name: Remove swap file from fstab
+      mount:
+        src: "{{ server_swap_file_path }}"
+        path: none
+        state: absent
+      become: true
+
+    - name: Include swap file removal tasks
+      include_tasks: remove_swap_file.yml
+  when:
+    - server_swap_file_stat_result.stat.exists
+    - server_swap_file_mb is undefined

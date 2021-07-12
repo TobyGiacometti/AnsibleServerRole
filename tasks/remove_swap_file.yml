@@ -1,0 +1,10 @@
+- name: Disable swapping on {{ server_swap_file_path }}
+  command: swapoff {{ server_swap_file_path|quote }}
+  become: true
+  when: molecule_yml is not defined
+
+- name: Remove {{ server_swap_file_path }}
+  file:
+    path: "{{ server_swap_file_path }}"
+    state: absent
+  become: true
