@@ -1,0 +1,3 @@
+server_ssh_port: 22
+server_update_success_report: false
+server_update_reboot: true

@@ -1,0 +1,11 @@
+- name: Generate system locales
+  listen: server_locales_handler
+  command: locale-gen
+  become: true
+
+- name: Reload service sshd
+  listen: server_sshd_reload_handler
+  service:
+    name: sshd
+    state: reloaded
+  become: true

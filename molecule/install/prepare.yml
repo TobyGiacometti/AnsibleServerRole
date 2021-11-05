@@ -1,0 +1,12 @@
+- name: Prepare all hosts
+  hosts: all
+  tasks:
+    - name: Install packages
+      apt:
+        name: openssh-server
+        update_cache: true
+
+    - name: Start service dbus
+      service:
+        name: dbus
+        state: started

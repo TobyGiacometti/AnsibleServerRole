@@ -1,0 +1,17 @@
+- name: Verify all hosts
+  hosts: all
+  tasks:
+    - name: Retrieve state of passwd file
+      command: cat /etc/passwd
+      register: passwd_cat_result
+
+    - name: Retrieve state of test user's home directory
+      stat:
+        path: /home/test
+      register: home_dir_stat_result
+
+    - name: Run tests
+      assert:
+        that:
+          - passwd_cat_result.stdout is not search('^test:', multiline=True)
+          - not home_dir_stat_result.stat.exists

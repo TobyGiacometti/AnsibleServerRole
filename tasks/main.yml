@@ -1,0 +1,28 @@
+- name: Include swap file management tasks
+  include_tasks: manage_swap_file.yml
+
+- name: Include package manager management tasks
+  include_tasks: manage_package_manager.yml
+
+- name: Include system clock management tasks
+  include_tasks: manage_clock.yml
+
+- name: Include system locale management tasks
+  include_tasks: manage_locales.yml
+
+- name: Include SSH server management tasks
+  include_tasks: manage_sshd.yml
+
+- name: Include terminal management tasks
+  include_tasks: manage_terminal.yml
+
+- name: Include editor management tasks
+  include_tasks: manage_editor.yml
+
+- name: Include user management tasks
+  include_tasks: manage_user.yml
+  loop: "{{ server_users }}"
+  loop_control:
+    loop_var: server_user
+    extended: true
+  no_log: true

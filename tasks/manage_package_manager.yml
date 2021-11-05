@@ -1,0 +1,36 @@
+- name: Adjust APT package sources
+  copy:
+    src: sources.list
+    dest: /etc/apt/sources.list
+    mode: 0644
+  become: true
+  register: server_apt_sources_result
+
+- name: Update APT package lists  # noqa 503
+  apt:
+    update_cache: true
+  become: true
+  when: server_apt_sources_result.changed
+
+- name: Enable automatic package update after setup
+  debconf:
+    name: unattended-upgrades
+    question: unattended-upgrades/enable_auto_updates
+    vtype: boolean
+    value: "true"
+  become: true
+
+- name: Install packages for automatic package update
+  apt:
+    name:
+      - unattended-upgrades
+      - bsd-mailx
+    update_cache: true
+  become: true
+
+- name: Configure automatic package update
+  template:
+    src: unattended-upgrades.j2
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    mode: 0644
+  become: true

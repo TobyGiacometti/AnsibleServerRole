@@ -1,0 +1,13 @@
+- name: Converge all hosts
+  hosts: all
+  vars:
+    server_users:
+      - name: test
+        state: absent
+  tasks:
+    - name: Include user management tasks
+      include_tasks: ../../tasks/manage_user.yml
+      loop: "{{ server_users }}"
+      loop_control:
+        loop_var: server_user
+        extended: true

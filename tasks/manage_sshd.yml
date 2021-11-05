@@ -1,0 +1,7 @@
+- name: Configure SSH server
+  template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    mode: 0644
+  become: true
+  notify: server_sshd_reload_handler

@@ -1,0 +1,29 @@
+- name: Converge all hosts
+  hosts: all
+  roles:
+    - role: "{{ playbook_dir|dirname|dirname }}"
+      vars:
+        server_swap_file_mb: 512
+        server_update_email: root
+        server_time_zone: Europe/Zurich
+        server_locales:
+          - en_US.UTF-8 UTF-8
+          - de_CH.UTF-8 UTF-8
+        server_users:
+          - name: test1
+            password: test
+            ssh_keys: |
+              ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILLvN9CeszM2AVXN71S6oykDvK/zmcS5M4v9fUAFLS7W test1
+              ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE2t3yUgO8zLwut+2asWzhcebhrnsKwUF4KBeB8SyhRS test2
+            sudo: true
+
+          - name: test2
+            password: false
+            ssh_keys: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILLvN9CeszM2AVXN71S6oykDvK/zmcS5M4v9fUAFLS7W test
+            sudo: false
+            shell: /bin/dash
+
+          - name: test3
+            password: "{{ omit }}"
+            ssh_keys: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILLvN9CeszM2AVXN71S6oykDvK/zmcS5M4v9fUAFLS7W test
+            sudo: false

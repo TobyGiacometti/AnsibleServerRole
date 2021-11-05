@@ -1,0 +1,95 @@
+- name: Verify all hosts
+  hosts: all
+  vars_files:
+    - ../../vars/main.yml
+  tasks:
+    - name: Retrieve state of swap file
+      stat:
+        get_checksum: false
+        path: "{{ server_swap_file_path }}"
+      register: swap_file_stat_result
+
+    - name: Retrieve state of fstab
+      command: cat /etc/fstab
+      register: fstab_cat_result
+
+    - name: Retrieve state of APT package sources
+      stat:
+        path: /etc/apt/sources.list
+      register: apt_sources_stat_result
+
+    - name: Retrieve activation state of automatic package update
+      stat:
+        path: /etc/apt/apt.conf.d/20auto-upgrades
+      register: apt_auto_upgrades_conf_stat_result
+
+    - name: Retrieve configuration state of automatic package update
+      stat:
+        path: /etc/apt/apt.conf.d/50unattended-upgrades
+      register: apt_unattended_upgrades_conf_stat_result
+
+    - name: Retrieve state of system clock
+      command: timedatectl
+      register: timedatectl_status_result
+
+    - name: Retrieve state of system locales
+      command: locale -a
+      register: locale_result
+
+    - name: Retrieve configuration state of SSH server
+      stat:
+        path: /etc/ssh/sshd_config
+      register: sshd_config_stat_result
+
+    - name: Retrieve state of alternatives
+      command: update-alternatives --get-selections
+      register: update_alternatives_get_result
+
+    - name: Retrieve state of passwd file
+      command: cat /etc/passwd
+      register: passwd_cat_result
+
+    - name: Retrieve state of shadow file
+      command: cat /etc/shadow
+      register: shadow_cat_result
+
+    - name: Retrieve state of test user's home directory
+      stat:
+        path: /home/test1
+      register: home_dir_stat_result
+
+    - name: Retrieve state of test user's bashrc
+      stat:
+        path: /home/test1/.bashrc
+      register: bashrc_stat_result
+
+    - name: Retrieve state of test user's SSH authorized keys
+      stat:
+        path: /home/test1/.ssh/authorized_keys
+      register: authorized_keys_stat_result
+
+    - name: Retrieve state of sudo group
+      command: grep sudo /etc/group
+      register: sudo_group_grep_result
+
+    - name: Run tests
+      assert:
+        that:
+          - swap_file_stat_result.stat.size == 536870912
+          - fstab_cat_result.stdout is search(server_swap_file_path|regex_escape)
+          - apt_sources_stat_result.stat.checksum == '22c161360ee0f16d40c11838c44d57f5723be4ba'
+          - apt_auto_upgrades_conf_stat_result.stat.checksum == '91d0ccbd3dddaa6f5f5efeee64c42df4680170ba'
+          - apt_unattended_upgrades_conf_stat_result.stat.checksum == '37c60ed07590d4674f6685c110d70ac75d5821aa'
+          - "timedatectl_status_result is search('Time zone: Europe/Zurich')"
+          - locale_result.stdout is search ('de_CH.utf8')
+          - sshd_config_stat_result.stat.checksum == '03d0413a7c5fe8e00c18839c5d1416364f63bbed'
+          - update_alternatives_get_result.stdout is search('editor\s+manual\s+/usr/bin/vim.basic')
+          - passwd_cat_result.stdout is search('^test1:.*/bin/bash$', multiline=True)
+          - passwd_cat_result.stdout is search('^test2:.*/bin/dash$', multiline=True)
+          - shadow_cat_result.stdout is search('^test1:\$6\$', multiline=True)
+          - shadow_cat_result.stdout is search('^test2:\*:', multiline=True)
+          - shadow_cat_result.stdout is search('^test3:!:', multiline=True)
+          - home_dir_stat_result.stat.mode == '0750'
+          - bashrc_stat_result.stat.checksum == 'efdca37e3f23fe01218d0966b0040791b4a62af7'
+          - authorized_keys_stat_result.stat.checksum == 'a85271511aaee3d8c82dd8b83ea25a9d8008e10c'
+          - sudo_group_grep_result.stdout == 'sudo:x:27:test1'

@@ -1,0 +1,6 @@
+- name: Prepare all hosts
+  hosts: all
+  tasks:
+    - name: Create user
+      user:
+        name: test

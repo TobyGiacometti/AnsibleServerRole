@@ -1,0 +1,15 @@
+- name: Verify all hosts
+  hosts: all
+  vars_files:
+    - ../../vars/main.yml
+  tasks:
+    - name: Retrieve state of swap file
+      stat:
+        get_checksum: false
+        path: "{{ server_swap_file_path }}"
+      register: swap_file_stat_result
+
+    - name: Run tests
+      assert:
+        that:
+          - swap_file_stat_result.stat.size == 536870912

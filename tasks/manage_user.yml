@@ -1,0 +1,72 @@
+- name: Install sudo
+  apt:
+    name: sudo
+    update_cache: true
+  become: true
+  when: ansible_loop.first
+
+- name: Manage present user
+  block:
+    - name: Create user {{ server_user.name }} and manage attributes
+      user:
+        name: "{{ server_user.name }}"
+        password: "{% if not server_user.password %}\
+          *\
+          {% elif server_user.password == omit %}\
+          {{ omit }}\
+          {% else %}\
+          {{ server_user.password|password_hash(\
+          'sha512',\
+          ('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'|\
+          shuffle(seed=ansible_machine_id+server_user.name)|join)[:16]\
+          ) }}\
+          {% endif %}"
+        shell: "{{ server_user.shell|default('/bin/bash') }}"
+      become: true
+
+    - name: Adjust home directory permissions for user {{ server_user.name }}
+      file:
+        path: /home/{{ server_user.name }}
+        mode: 0750
+      become: true
+
+    - name: Adjust bashrc for user {{ server_user.name }}
+      copy:
+        src: bashrc
+        dest: /home/{{ server_user.name }}/.bashrc
+        owner: "{{ server_user.name }}"
+        group: "{{ server_user.name }}"
+        mode: 0644
+      become: true
+
+    - name: Manage SSH authorized keys for user {{ server_user.name }}
+      authorized_key:
+        user: "{{ server_user.name }}"
+        exclusive: true
+        key: "{{ server_user.ssh_keys }}"
+      become: true
+
+    - name: Enable sudo for user {{ server_user.name }}
+      user:
+        name: "{{ server_user.name }}"
+        groups: sudo
+        append: true
+      become: true
+      when: server_user.sudo
+
+    - name: Disable sudo for user {{ server_user.name }}
+      command: deluser {{ server_user.name|quote }} sudo
+      become: true
+      register: server_deluser_result
+      failed_when: server_deluser_result.rc not in [0, 6]
+      changed_when: server_deluser_result.rc == 0
+      when: not server_user.sudo
+  when: server_user.state is undefined or server_user.state == 'present'
+
+- name: Remove user {{ server_user.name }}
+  user:
+    name: "{{ server_user.name }}"
+    remove: true
+    state: absent
+  become: true
+  when: server_user.state is defined and server_user.state == 'absent'
